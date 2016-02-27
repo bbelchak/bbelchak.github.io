@@ -1,0 +1,851 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en">
+<title type="text">Belchak.com</title>
+<generator uri="https://github.com/mojombo/jekyll">Jekyll</generator>
+<link rel="self" type="application/atom+xml" href="/feed.xml" />
+<link rel="alternate" type="text/html" href="" />
+<updated>2016-02-27T16:22:05+00:00</updated>
+<id>/</id>
+<author>
+  <name>Ben Belchak</name>
+  <uri>/</uri>
+  <email>ben@belchak.com</email>
+</author>
+
+
+<entry>
+  <title type="html"><![CDATA[Making Sensu work with Graphite]]></title>
+ <link rel="alternate" type="text/html" href="/2012/08/02/making-sensu-work-with-graphite/" />
+  <id>/2012/08/02/making-sensu-work-with-graphite</id>
+  <published>2012-08-02T10:48:00+01:00</published>
+  <updated>2012-08-02T10:48:00+01:00</updated>
+  <author>
+    <name>Ben Belchak</name>
+    <uri></uri>
+    <email>ben@belchak.com</email>
+  </author>
+  <content type="html">
+    &lt;p&gt;Like many companies, I’m sure, we’re investigating using &lt;a href=&quot;http://www.sonian.com/cloud-monitoring-sensu/&quot;&gt;Sensu&lt;/a&gt; for monitoring
+and &lt;a href=&quot;http://graphite.wikidot.com/&quot;&gt;Graphite&lt;/a&gt; for metrics collecting. The docs for making these two commuicate together over AMQP
+are pretty good except for one thing.&lt;/p&gt;
+
+&lt;p&gt;Using the docs that I’ve read, when you start up Sensu first with its default options for AMQP, and then start up Graphite
+to read from that queue, Graphite will crash every time it tries to create the exchange. The reason for this, after lots of
+hair-pulling and debugging, is because Graphite is hard-coded to set up a durable exchange for its metrics, while Sensu’s default
+is to set up a non-durable exchange. &lt;a href=&quot;http://rabbitmq.com/&quot;&gt;RabbitMQ&lt;/a&gt; will not allow you to create an exchange with the same name
+and different options, so whichever piece of software created the exchange will work, but the other will blow up all over your
+face.&lt;/p&gt;
+
+&lt;p&gt;The solution to this is pretty simple, but I haven’t seen it documented anywhere. Simply add &lt;code&gt;&quot;durable&quot;: true&lt;/code&gt; to your exchange
+configuration in your Sensu config.json like so:&lt;/p&gt;
+
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-json&quot; data-lang=&quot;json&quot;&gt;&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
+    &lt;/span&gt;&lt;span class=&quot;nt&quot;&gt;&quot;handlers&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
+        &lt;/span&gt;&lt;span class=&quot;nt&quot;&gt;&quot;graphite&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
+          &lt;/span&gt;&lt;span class=&quot;nt&quot;&gt;&quot;exchange&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
+            &lt;/span&gt;&lt;span class=&quot;nt&quot;&gt;&quot;name&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;graphite&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
+            &lt;/span&gt;&lt;span class=&quot;nt&quot;&gt;&quot;type&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;topic&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
+            &lt;/span&gt;&lt;span class=&quot;nt&quot;&gt;&quot;key&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;metrics&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
+            &lt;/span&gt;&lt;span class=&quot;nt&quot;&gt;&quot;durable&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;kc&quot;&gt;true&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
+          &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;},&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
+          &lt;/span&gt;&lt;span class=&quot;nt&quot;&gt;&quot;type&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;amqp&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
+          &lt;/span&gt;&lt;span class=&quot;nt&quot;&gt;&quot;send_only_check_output&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;kc&quot;&gt;true&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
+        &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;},&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
+    &lt;/span&gt;&lt;span class=&quot;err&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
+&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;Hope that helps!&lt;/p&gt;
+
+    &lt;p&gt;&lt;a href=&quot;/2012/08/02/making-sensu-work-with-graphite/&quot;&gt;Making Sensu work with Graphite&lt;/a&gt; was originally published by Ben Belchak at &lt;a href=&quot;&quot;&gt;Belchak.com&lt;/a&gt; on August 02, 2012.&lt;/p&gt;
+  </content>
+</entry>
+
+
+<entry>
+  <title type="html"><![CDATA[Migrating from WordPress to Octopress]]></title>
+ <link rel="alternate" type="text/html" href="/2012/07/31/migrating-from-wordpress-to-octopress/" />
+  <id>/2012/07/31/migrating-from-wordpress-to-octopress</id>
+  <published>2012-07-31T17:22:00+01:00</published>
+  <updated>2012-07-31T17:22:00+01:00</updated>
+  <author>
+    <name>Ben Belchak</name>
+    <uri></uri>
+    <email>ben@belchak.com</email>
+  </author>
+  <content type="html">
+    &lt;h2 id=&quot;wordpress-is-awesome-whyd-you-switch&quot;&gt;WordPress is awesome, why’d you switch?&lt;/h2&gt;
+&lt;p&gt;So, I’ve been really hating WordPress as a blog engine lately. Tons of spam,
+lots of emails from spam accounts signing up and trying to post comments, etc.
+We had some discussion at the office recently about what blog engine to use for
+our corporate blog, (we ended up using WordPress) but through the process I decided
+to evaluate &lt;a href=&quot;http://octopress.org&quot;&gt;Octopress&lt;/a&gt; as an approach to static content
+serving for my personal blog.&lt;/p&gt;
+
+&lt;p&gt;On top of the security issues that I’ve been dealing with (constantly updating the
+software, plugins and deleting spam), I host at &lt;a href=&quot;http://dreamhost.com/&quot;&gt;Dreamhost&lt;/a&gt;.
+They are not known as the fastest hosting company around, and I was finding that my
+pages were loading so slowly that it was beginning to get frustrating.&lt;/p&gt;
+
+&lt;p&gt;Plus, I could never find a good WordPress theme that I wanted to look at and I never
+have time to spend customizing a complex WordPress theme.&lt;/p&gt;
+
+&lt;h2 id=&quot;enter-octopress&quot;&gt;Enter Octopress&lt;/h2&gt;
+&lt;p&gt;I evaluated Octopress for about 10 minutes and knew I was hooked. I loved the
+simplicity and the beauty of its default theme (and since it’s themeable using
+&lt;a href=&quot;http://sass-lang.com/&quot;&gt;SASS&lt;/a&gt; I can easily customize it) and the ease of deployment
+to any number of hosting platforms (rsync, &lt;a href=&quot;http://pages.github.com&quot;&gt;github pages&lt;/a&gt;,
+&lt;a href=&quot;http://heroku.com&quot;&gt;heroku&lt;/a&gt;, etc) leaves no excuse not to use it! Also, since all
+the content is generated dynamically on your machine and then uploaded as static content,
+it is very fast to serve on the server, and is less prone to spam and security holes.&lt;/p&gt;
+
+&lt;h2 id=&quot;how-i-did-it&quot;&gt;How I did it&lt;/h2&gt;
+&lt;p&gt;I simply exported all of my posts and pages using the Export functionality in the WordPress
+administration tool and then ran it through &lt;a href=&quot;https://github.com/thomasf/exitwp/&quot;&gt;exitwp&lt;/a&gt;.
+The result was phenomenal! I ended up with an export of all my pages and posts. Since
+I was already using &lt;a href=&quot;http://disqus.com&quot;&gt;Disqus&lt;/a&gt; all the comments came over automatically.&lt;/p&gt;
+
+&lt;p&gt;I did have to do some very basic formatting for some of my code snippets in order to get
+the syntax highlighting to work properly, but that was a simple matter of just setting the
+language in the generated markdown files.&lt;/p&gt;
+
+&lt;h2 id=&quot;deploying&quot;&gt;Deploying&lt;/h2&gt;
+&lt;p&gt;I use the Rsync deploy method to my Dreamhost shared server, but I am also considering
+migrating to &lt;a href=&quot;http://pages.github.com/&quot;&gt;github pages&lt;/a&gt; at some point. Deploying is as simple as:&lt;/p&gt;
+
+&lt;figure class=&quot;code-highlight-figure&quot;&gt;&lt;div class=&quot;code-highlight&quot;&gt;&lt;pre class=&quot;code-highlight-pre&quot;&gt;&lt;div data-line=&quot;1&quot; class=&quot;code-highlight-row numbered&quot;&gt;&lt;div class=&quot;code-highlight-line&quot;&gt;$ rake generate
+&lt;/div&gt;&lt;/div&gt;&lt;div data-line=&quot;2&quot; class=&quot;code-highlight-row numbered&quot;&gt;&lt;div class=&quot;code-highlight-line&quot;&gt;$ rake deploy&lt;/div&gt;&lt;/div&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/figure&gt;
+
+&lt;p&gt;And that’s it! You can even streamline it more by only running one command:&lt;/p&gt;
+
+&lt;figure class=&quot;code-highlight-figure&quot;&gt;&lt;div class=&quot;code-highlight&quot;&gt;&lt;pre class=&quot;code-highlight-pre&quot;&gt;&lt;div data-line=&quot;1&quot; class=&quot;code-highlight-row numbered&quot;&gt;&lt;div class=&quot;code-highlight-line&quot;&gt;$ rake gen_deploy&lt;/div&gt;&lt;/div&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/figure&gt;
+
+&lt;p&gt;Overall, the migration was even more simple than I had expected, and I’m very happy with the
+results! Now the hard part is coming up with interesting content to put here!&lt;/p&gt;
+
+    &lt;p&gt;&lt;a href=&quot;/2012/07/31/migrating-from-wordpress-to-octopress/&quot;&gt;Migrating from WordPress to Octopress&lt;/a&gt; was originally published by Ben Belchak at &lt;a href=&quot;&quot;&gt;Belchak.com&lt;/a&gt; on July 31, 2012.&lt;/p&gt;
+  </content>
+</entry>
+
+
+<entry>
+  <title type="html"><![CDATA[JIRA and Campfire Integration]]></title>
+ <link rel="alternate" type="text/html" href="/2012/01/21/jira-and-campfire-integration/" />
+  <id>/2012/01/21/jira-and-campfire-integration</id>
+  <published>2012-01-21T12:25:22+00:00</published>
+  <updated>2012-01-21T12:25:22+00:00</updated>
+  <author>
+    <name>Ben Belchak</name>
+    <uri></uri>
+    <email>ben@belchak.com</email>
+  </author>
+  <content type="html">
+    &lt;p&gt;I have been working on migrating my company’s Pivotal Tracker to JIRA. We love most of the features of JIRA, but we were really missing the nice updates to our Campfire room to tell us what is going on with our issues.&lt;/p&gt;
+
+&lt;p&gt;Sure, we could use an RSS feed plugin for &lt;a href=&quot;http://www.belchak.com/2011/06/24/campy-the-python-campfire-bot/&quot;&gt;Campy&lt;/a&gt;, but that is not real-time enough.&lt;/p&gt;
+
+&lt;p&gt;I didn’t want to write a huge plugin just to send messages to Campfire (it seems like such a simple thing to do!). I was poking around for solutions, and came across &lt;a href=&quot;https://studio.plugins.atlassian.com/wiki/display/GRV/Script+Runner&quot;&gt;this plugin&lt;/a&gt;. It’s a plugin that runs scripts written in the &lt;a href=&quot;http://groovy.codehaus.org/&quot;&gt;Groovy&lt;/a&gt; dynamic language for Java. One nice thing about this plugin is that it lets you execute Python (Jython) or Ruby (Jruby). The only problem is that you can’t write a listener using Python, so I ended up having to learn Groovy.&lt;/p&gt;
+
+&lt;p&gt;Here’s what I came up with. It requires you to install the &lt;a href=&quot;http://groovy.codehaus.org/modules/http-builder/doc/index.html&quot;&gt;HTTPBuilder&lt;/a&gt; libraries for Groovy, and this script will require some customization to fit your environment. Right now it only supports sending messages when new issues are created and when a new comment is added to an existing issue, but other issue events would be easy enough to add - this is meant as an example.&lt;/p&gt;
+
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-groovy&quot; data-lang=&quot;groovy&quot;&gt;&lt;span class=&quot;kn&quot;&gt;import&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;com.atlassian.jira.event.issue.AbstractIssueEventListener&lt;/span&gt;
+    &lt;span class=&quot;kn&quot;&gt;import&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;com.atlassian.jira.event.issue.IssueEvent&lt;/span&gt;
+    &lt;span class=&quot;kn&quot;&gt;import&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;com.atlassian.jira.ComponentManager&lt;/span&gt;
+    &lt;span class=&quot;kn&quot;&gt;import&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;org.apache.log4j.Category&lt;/span&gt;
+    &lt;span class=&quot;kn&quot;&gt;import&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;groovyx.net.http.RESTClient&lt;/span&gt;
+    &lt;span class=&quot;kn&quot;&gt;import&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;static&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;groovyx&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;net&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;http&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;ContentType&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;JSON&lt;/span&gt;
+    &lt;span class=&quot;kn&quot;&gt;import&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;static&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;com&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;atlassian&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;jira&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;event&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;type&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;EventType&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.*&lt;/span&gt;
+
+    &lt;span class=&quot;kd&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;CampfireListener&lt;/span&gt; &lt;span class=&quot;kd&quot;&gt;extends&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;AbstractIssueEventListener&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+
+        &lt;span class=&quot;nd&quot;&gt;@Override&lt;/span&gt;
+        &lt;span class=&quot;kt&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;workflowEvent&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;IssueEvent&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;event&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+            &lt;span class=&quot;kt&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Category&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;log&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Category&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;getInstance&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;com.onresolve.jira.groovy.PostFunction&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
+            &lt;span class=&quot;kt&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;campfire&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;RESTClient&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;&#39;https://CAMPFIREID.campfirenow.com/room/ROOMID/&#39;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
+            &lt;span class=&quot;kt&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;issueBaseUrl&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;http://yourjirahost:8080/path-to-jira/browse/&quot;&lt;/span&gt;
+            &lt;span class=&quot;n&quot;&gt;campfire&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;auth&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;basic&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;&#39;CAMPFIRE AUTH TOKEN&#39;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;&#39;X&#39;&lt;/span&gt;
+            &lt;span class=&quot;k&quot;&gt;switch&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;event&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;getEventTypeId&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;())&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+                &lt;span class=&quot;k&quot;&gt;case&lt;/span&gt; &lt;span class=&quot;nl&quot;&gt;ISSUE_COMMENTED_ID:&lt;/span&gt;
+                    &lt;span class=&quot;kt&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;resp&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;campfire&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;post&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt; &lt;span class=&quot;nl&quot;&gt;path:&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;&#39;speak.json&#39;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt;
+                                          &lt;span class=&quot;nl&quot;&gt;body:&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;[&lt;/span&gt; &lt;span class=&quot;nl&quot;&gt;message:&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;[&lt;/span&gt; &lt;span class=&quot;nl&quot;&gt;type:&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;TextMessage&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nl&quot;&gt;body:&lt;/span&gt;
+                                              &lt;span class=&quot;n&quot;&gt;String&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;format&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;%s added a comment to %s (%s%s):&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt;
+                                                  &lt;span class=&quot;n&quot;&gt;event&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;getUser&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;().&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;getDisplayName&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(),&lt;/span&gt;
+                                                  &lt;span class=&quot;n&quot;&gt;event&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;issue&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;getKey&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(),&lt;/span&gt;
+                                                  &lt;span class=&quot;n&quot;&gt;issueBaseUrl&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt;
+                                                  &lt;span class=&quot;n&quot;&gt;event&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;issue&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;getKey&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;())]&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;],&lt;/span&gt;
+                                          &lt;span class=&quot;nl&quot;&gt;requestContentType:&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;JSON&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
+                    &lt;span class=&quot;n&quot;&gt;resp&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;campfire&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;post&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt; &lt;span class=&quot;nl&quot;&gt;path:&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;&#39;speak.json&#39;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt;
+                                          &lt;span class=&quot;nl&quot;&gt;body:&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;[&lt;/span&gt; &lt;span class=&quot;nl&quot;&gt;message:&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;[&lt;/span&gt; &lt;span class=&quot;nl&quot;&gt;type:&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;PasteMessage&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nl&quot;&gt;body:&lt;/span&gt;
+                                              &lt;span class=&quot;n&quot;&gt;String&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;format&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;%s&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;event&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;getComment&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;().&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;getBody&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;())&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;]&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;],&lt;/span&gt;
+                                          &lt;span class=&quot;nl&quot;&gt;requestContentType:&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;JSON&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
+                    &lt;span class=&quot;k&quot;&gt;break&lt;/span&gt;
+                &lt;span class=&quot;k&quot;&gt;case&lt;/span&gt; &lt;span class=&quot;nl&quot;&gt;ISSUE_CREATED_ID:&lt;/span&gt;
+                    &lt;span class=&quot;kt&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;resp&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;campfire&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;post&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt; &lt;span class=&quot;nl&quot;&gt;path:&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;&#39;speak.json&#39;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt;
+                            &lt;span class=&quot;nl&quot;&gt;body:&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;[&lt;/span&gt; &lt;span class=&quot;nl&quot;&gt;message:&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;[&lt;/span&gt; &lt;span class=&quot;nl&quot;&gt;type:&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;TextMessage&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nl&quot;&gt;body:&lt;/span&gt;
+                                &lt;span class=&quot;n&quot;&gt;String&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;format&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;&#39;%s created a new issue: &quot;%s&quot; (%s%s):&#39;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt;
+                                    &lt;span class=&quot;n&quot;&gt;event&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;getUser&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;().&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;getDisplayName&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(),&lt;/span&gt;
+                                    &lt;span class=&quot;n&quot;&gt;event&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;issue&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;getSummary&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(),&lt;/span&gt;
+                                    &lt;span class=&quot;n&quot;&gt;issueBaseUrl&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt;
+                                    &lt;span class=&quot;n&quot;&gt;event&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;issue&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;getKey&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;())&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;]&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;],&lt;/span&gt;
+                            &lt;span class=&quot;nl&quot;&gt;requestContentType:&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;JSON&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
+                    &lt;span class=&quot;n&quot;&gt;resp&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;campfire&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;post&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt; &lt;span class=&quot;nl&quot;&gt;path:&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;&#39;speak.json&#39;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt;
+                          &lt;span class=&quot;nl&quot;&gt;body:&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;[&lt;/span&gt; &lt;span class=&quot;nl&quot;&gt;message:&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;[&lt;/span&gt; &lt;span class=&quot;nl&quot;&gt;type:&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;PasteMessage&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nl&quot;&gt;body:&lt;/span&gt;
+                              &lt;span class=&quot;n&quot;&gt;String&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;format&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;%s&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;event&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;getIssue&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;().&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;getDescription&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;())&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;]&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;],&lt;/span&gt;
+                          &lt;span class=&quot;nl&quot;&gt;requestContentType:&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;JSON&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
+                    &lt;span class=&quot;k&quot;&gt;break&lt;/span&gt;
+            &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
+        &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
+    &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+
+    &lt;p&gt;&lt;a href=&quot;/2012/01/21/jira-and-campfire-integration/&quot;&gt;JIRA and Campfire Integration&lt;/a&gt; was originally published by Ben Belchak at &lt;a href=&quot;&quot;&gt;Belchak.com&lt;/a&gt; on January 21, 2012.&lt;/p&gt;
+  </content>
+</entry>
+
+
+<entry>
+  <title type="html"><![CDATA[Problems with IPv4/6 hosts in OSX Lion]]></title>
+ <link rel="alternate" type="text/html" href="/2011/07/27/problems-with-ipv46-hosts-in-osx-lion/" />
+  <id>/2011/07/27/problems-with-ipv46-hosts-in-osx-lion</id>
+  <published>2011-07-27T18:18:43+01:00</published>
+  <updated>2011-07-27T18:18:43+01:00</updated>
+  <author>
+    <name>Ben Belchak</name>
+    <uri></uri>
+    <email>ben@belchak.com</email>
+  </author>
+  <content type="html">
+    &lt;p&gt;If you’re like me, you end up doing a lot of testing in virtual machines. I run several VMs that do various different tasks for me so that I don’t have to sully my Mac with packages I rarely need, etc. So what I do is create a VM and give it a local hostname defined in my /etc/hosts file.&lt;/p&gt;
+
+&lt;p&gt;Recently, after my upgrade to OSX Lion, I started running into an issue where it would take over 5 seconds to connect to any of my VMs using any protocol (SSH, HTTP, etc). After several hours of troubleshooting, and several Wireshark sessions later, the truth of the matter was plain:&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&quot;http://www.belchak.com/wp-content/uploads/2011/07/kdxf5y8qtaxh.png&quot;&gt;&lt;img src=&quot;http://www.belchak.com/wp-content/uploads/2011/07/kdxf5y8qtaxh-300x15.png&quot; alt=&quot;&quot; /&gt;&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;OSX is now doing IPv6 by default with no way that I have found to disable it yet, and so that means that if you have hosts that you want to reference with locally defined hostnames, you are going to have to create an IPv6 entry for them as well.&lt;/p&gt;
+
+&lt;p&gt;Here is a great site that I found that helps with the conversion: &lt;a href=&quot;http://www.subnetonline.com/pages/converters/ipv4-to-ipv6.php&quot;&gt;SubnetOnline.com&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;I am sure that there are better ways to do this, but I just wanted to share this quick little hack that I found with you. If you have a better way, please let me know!&lt;/p&gt;
+
+    &lt;p&gt;&lt;a href=&quot;/2011/07/27/problems-with-ipv46-hosts-in-osx-lion/&quot;&gt;Problems with IPv4/6 hosts in OSX Lion&lt;/a&gt; was originally published by Ben Belchak at &lt;a href=&quot;&quot;&gt;Belchak.com&lt;/a&gt; on July 27, 2011.&lt;/p&gt;
+  </content>
+</entry>
+
+
+<entry>
+  <title type="html"><![CDATA[Re-enabling Key Repeat in OSX Lion]]></title>
+ <link rel="alternate" type="text/html" href="/2011/07/23/re-enabling-key-repeat-in-osx-lion/" />
+  <id>/2011/07/23/re-enabling-key-repeat-in-osx-lion</id>
+  <published>2011-07-23T23:51:15+01:00</published>
+  <updated>2011-07-23T23:51:15+01:00</updated>
+  <author>
+    <name>Ben Belchak</name>
+    <uri></uri>
+    <email>ben@belchak.com</email>
+  </author>
+  <content type="html">
+    &lt;p&gt;I have recently upgraded to OSX Lion, and I have to say that I love everything about it. Except for one thing. In many apps, the key repeat has been disabled in favor of the new press-and-hold popup for getting alternative characters.&lt;/p&gt;
+
+&lt;p&gt;This is fine for most apps, but for apps like &lt;a href=&quot;http://www.jetbrains.com/pycharm/&quot;&gt;PyCharm&lt;/a&gt; where I use vi key maps, it becomes very, very frustrating.&lt;/p&gt;
+
+&lt;p&gt;I came across this little tip to re-enable the key repeat, and my life is measurably better (first world problems, I know…).&lt;/p&gt;
+
+&lt;p&gt;Run the following in your Terminal.app:&lt;/p&gt;
+
+&lt;figure class=&quot;code-highlight-figure&quot;&gt;&lt;div class=&quot;code-highlight&quot;&gt;&lt;pre class=&quot;code-highlight-pre&quot;&gt;&lt;div data-line=&quot;1&quot; class=&quot;code-highlight-row numbered&quot;&gt;&lt;div class=&quot;code-highlight-line&quot;&gt;$ defaults write -g ApplePressAndHoldEnabled -bool false&lt;/div&gt;&lt;/div&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/figure&gt;
+
+&lt;p&gt;Then reboot, and you should be good to go!&lt;/p&gt;
+
+    &lt;p&gt;&lt;a href=&quot;/2011/07/23/re-enabling-key-repeat-in-osx-lion/&quot;&gt;Re-enabling Key Repeat in OSX Lion&lt;/a&gt; was originally published by Ben Belchak at &lt;a href=&quot;&quot;&gt;Belchak.com&lt;/a&gt; on July 23, 2011.&lt;/p&gt;
+  </content>
+</entry>
+
+
+<entry>
+  <title type="html"><![CDATA[Campy: the Python Campfire Bot]]></title>
+ <link rel="alternate" type="text/html" href="/2011/06/24/campy-the-python-campfire-bot/" />
+  <id>/2011/06/24/campy-the-python-campfire-bot</id>
+  <published>2011-06-24T12:06:13+01:00</published>
+  <updated>2011-06-24T12:06:13+01:00</updated>
+  <author>
+    <name>Ben Belchak</name>
+    <uri></uri>
+    <email>ben@belchak.com</email>
+  </author>
+  <content type="html">
+    &lt;p&gt;We use a &lt;a href=&quot;http://www.campfirenow.com&quot;&gt;Campfire&lt;/a&gt; at &lt;a href=&quot;http://www.needle.com&quot;&gt;Needle&lt;/a&gt; for our day-to-day communication between our tech team members and other business members. We really like Campfire’s ability to store files, conference call and keep transcripts even when you are not logged in. We get &lt;a href=&quot;http://github.com&quot;&gt;GitHub&lt;/a&gt; commit messages, &lt;a href=&quot;http://pivotaltracker.com&quot;&gt;Pivotal Tracker&lt;/a&gt; story updates and more scattered in our conversations.&lt;/p&gt;
+
+&lt;p&gt;These one-way updates are very nice, but I thought it would be nice to be able to have a bot that sat in the channel and could take commands from anybody and do more complex tasks for us without us ever having to leave Campfire. To solve this problem, I wrote &lt;a href=&quot;http://www.github.com/bbelchak/campy&quot;&gt;Campy&lt;/a&gt;, a pure Python Campfire bot with an extensible plugin system.&lt;/p&gt;
+
+&lt;p&gt;The first plugin I wrote as a proof of concept is a Google image search plugin. You tell the bot some search parameters that you would like it to search for, and you get back an image inline in your chat transcript. Don’t worry, safe search is on by default so you don’t get any NSFW images back.&lt;/p&gt;
+
+&lt;p&gt;The second plugin I wrote was the all-important Pivotal Tracker plugin. This plugin lets you do the following:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;
+    &lt;p&gt;&lt;code&gt;pt story create &quot;Title&quot; &quot;Description&quot; bug|feature|chore|release&lt;/code&gt; – Create a story&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;&lt;code&gt;pt getmine started|finished|delivered|accepted|rejected|unstarted|unscheduled&lt;/code&gt; – Get a list of all stories that belong to you&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;&lt;code&gt;pt start #story_id&lt;/code&gt; – Start a particular story.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;&lt;code&gt;pt start|tell next bug|feature|chore [mine]&lt;/code&gt; – Start or tell the next story of a given type. Optionally supply ‘mine’ at the end of the message to only work on your own stories.&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;The plugins system is very extensible, so you can create a plugin to do pretty much anything!&lt;/p&gt;
+
+&lt;p&gt;You can get Campy here:  &lt;a href=&quot;https://github.com/bbelchak/campy&quot;&gt;https://github.com/bbelchak/campy&lt;/a&gt;&lt;/p&gt;
+
+    &lt;p&gt;&lt;a href=&quot;/2011/06/24/campy-the-python-campfire-bot/&quot;&gt;Campy: the Python Campfire Bot&lt;/a&gt; was originally published by Ben Belchak at &lt;a href=&quot;&quot;&gt;Belchak.com&lt;/a&gt; on June 24, 2011.&lt;/p&gt;
+  </content>
+</entry>
+
+
+<entry>
+  <title type="html"><![CDATA[Ergotron WorkFit-S Standing Desk Review ]]></title>
+ <link rel="alternate" type="text/html" href="/2011/03/04/workfit-standing-desk/" />
+  <id>/2011/03/04/workfit-standing-desk</id>
+  <published>2011-03-04T12:31:14+00:00</published>
+  <updated>2011-03-04T12:31:14+00:00</updated>
+  <author>
+    <name>Ben Belchak</name>
+    <uri></uri>
+    <email>ben@belchak.com</email>
+  </author>
+  <content type="html">
+    &lt;p&gt;A few months ago, I started investigating the health benefits of standing while I work at my computer. The benefits are myriad, and include:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;
+    &lt;p&gt;&lt;strong&gt;More calories burned&lt;/strong&gt;. Standing at a desk while you work can actually burn around 300 calories per day more than sitting.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;&lt;strong&gt;Standing at a desk helps people with back problems&lt;/strong&gt;. Humans were not made for sitting, and doing so for long periods of time can be really hard on your hips and lower back.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;&lt;strong&gt;Improved posture.&lt;/strong&gt; Standing can help improve your posture, which can relieve pain in your lower and upper back, and neck.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;&lt;strong&gt;More breaks.&lt;/strong&gt; I find that I take more breaks, which makes me happier and healthier. While standing, it is easier to just walk away instead of hauling yourself out of a chair.&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;After my research, I decided to convert my cheap IKEA desk into a standing desk by raising the legs up as far as they could go and then stacking books and Rubbermaid bins to get the height on the keyboard and monitors right. Here’s what I ended up with:&lt;/p&gt;
+
+&lt;p&gt;&lt;img class=&quot;left&quot; src=&quot;http://www.belchak.com/wp-content/uploads/2011/03/IMG_0042.jpg&quot; width=&quot;224&quot; height=&quot;224&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;As you can see, it is less than ideal. It forced me to stand 100% of the time, and in order to take a break from standing, I needed to disconnect my laptop from everything and take it to a chair. Not awesome.&lt;/p&gt;
+
+&lt;p&gt;I reverted back to a sitting desk, and kept wishing for a standing option that would allow me to quickly change to a sitting position if I got tired, without having to deal with completely rearranging my work area.&lt;/p&gt;
+
+&lt;p&gt;Then, I discovered the Ergotron WorkFit-S while searching around for standing desk options. I loved the youtube video I found here:&lt;/p&gt;
+
+&lt;iframe width=&quot;560&quot; height=&quot;315&quot; src=&quot;https://www.youtube.com/embed/lK4yYENEtHA&quot; frameborder=&quot;0&quot; allowfullscreen=&quot;&quot;&gt;&lt;/iframe&gt;
+
+&lt;p&gt;I bought the WorkFit-S Combo (laptop + LCD) on Amazon with overnight shipping with my Amazon Prime account, and it arrived very quickly. I was a bit worried because the tech specs indicated that the maximum monitor size is 20” while using a laptop. I spoke with one of their marketing people on Twitter, and they were very helpful, checking with their support staff and product managers to provide me with any tips that they could dig up while I anxiously awaited the FedEx delivery guy.&lt;/p&gt;
+
+&lt;p&gt;When I received it, I immediately installed it on my desk. It took approximately 15 minutes to get it built and installed on my desk. My 24” LCD fit perfectly on the right, with my laptop on the left. I think the concern with the size of the monitor is not necessarily the size, but the weight. I could probably fit a 27” on here without a problem if it was light enough. My LCD and laptop are probably right on the edge of the maximum weight. Since the up and down motion is achieved with a pulley system, I had to adjust the tension a bit to get the balance right.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;http://www.belchak.com/wp-content/uploads/2011/03/IMG_0253-224x300.jpg&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;I did have to move it after I’d installed it in the center of my corner desk because the mouse tray kept hitting the desk where it curves.&lt;/p&gt;
+
+&lt;p&gt;The thing will attach to virtually any surface, but they also make a wheeled cart that has similar features.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;http://www.belchak.com/wp-content/uploads/2011/03/IMG_0252-224x300.jpg&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;I am very happy with it so far, and I look forward to reaping the benefits of standing, while having the option to sit!&lt;/p&gt;
+
+&lt;p&gt;The Ergotron WorkFit retails for around $399 and you can find them on &lt;a href=&quot;http://www.amazon.com/s/ref=nb_sb_noss?url=search-alias%3Daps&amp;amp;field-keywords=workfit-s&amp;amp;x=0&amp;amp;y=0&quot;&gt;Amazon.com&lt;/a&gt; or elsewhere.&lt;/p&gt;
+
+    &lt;p&gt;&lt;a href=&quot;/2011/03/04/workfit-standing-desk/&quot;&gt;Ergotron WorkFit-S Standing Desk Review &lt;/a&gt; was originally published by Ben Belchak at &lt;a href=&quot;&quot;&gt;Belchak.com&lt;/a&gt; on March 04, 2011.&lt;/p&gt;
+  </content>
+</entry>
+
+
+<entry>
+  <title type="html"><![CDATA[Unit Testing Django with a NoSQL Backend]]></title>
+ <link rel="alternate" type="text/html" href="/2011/02/07/unit-testing-django-with-a-nosql-backend/" />
+  <id>/2011/02/07/unit-testing-django-with-a-nosql-backend</id>
+  <published>2011-02-07T19:44:24+00:00</published>
+  <updated>2011-02-07T19:44:24+00:00</updated>
+  <author>
+    <name>Ben Belchak</name>
+    <uri></uri>
+    <email>ben@belchak.com</email>
+  </author>
+  <content type="html">
+    &lt;p&gt;In my previous post about &lt;a href=&quot;http://www.belchak.com/2011/02/05/unit-testing-your-django-application/&quot;&gt;unit testing for django&lt;/a&gt;, I laid the groundwork for how to unit test any django application. One nice feature that django includes with its test framework is the test database syncing. Even better is if you are using &lt;a href=&quot;http://www.belchak.com/2011/01/27/django-database-migrations-with-south/&quot;&gt;South&lt;/a&gt; to do database migrations - it will run the migrations in  your test environment for you.&lt;/p&gt;
+
+&lt;p&gt;However, what if you are using a NoSQL database backend like MongoDB, Cassandra, CouchDB or something similar and you aren’t using the Django ORM? How do you handle setting up and tearing down the database environments?&lt;/p&gt;
+
+&lt;p&gt;The good news is that Python’s unittest framework makes this easy. You can override the &lt;code&gt;setUp()&lt;/code&gt; and &lt;code&gt;tearDown()&lt;/code&gt; on each TestCase that you build. Here is a snippet to get you started:&lt;/p&gt;
+
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-python&quot; data-lang=&quot;python&quot;&gt;&lt;span class=&quot;kn&quot;&gt;import&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;pymongo&lt;/span&gt;
+&lt;span class=&quot;kn&quot;&gt;from&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;django.test&lt;/span&gt; &lt;span class=&quot;kn&quot;&gt;import&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;TestCase&lt;/span&gt;
+
+&lt;span class=&quot;c&quot;&gt;# It would be best to define this in a utility class somewhere&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;get_db&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;db_name&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;bp&quot;&gt;None&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;):&lt;/span&gt;
+    &lt;span class=&quot;s&quot;&gt;&quot;&quot;&quot; GetDB - simple function to wrap getting a database
+    connection from the connection pool.
+    &quot;&quot;&quot;&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;pymongo&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Connection&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;
+            &lt;span class=&quot;n&quot;&gt;host&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;settings&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;MONGO_HOST&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+            &lt;span class=&quot;n&quot;&gt;port&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;settings&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;MONGO_PORT&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)[&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;getattr&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;
+                &lt;span class=&quot;n&quot;&gt;settings&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;MONGO_DBNAME_PREFIX&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt;
+                &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;db_name&lt;/span&gt; &lt;span class=&quot;ow&quot;&gt;or&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;settings&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;MONGO_DBNAME&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)]&lt;/span&gt;
+
+&lt;span class=&quot;k&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;MyTestCase&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;TestCase&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;):&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;fixtures&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&#39;test_data.json&#39;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;setUp&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;bp&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;):&lt;/span&gt;
+        &lt;span class=&quot;bp&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;db&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;get_db&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&#39;test&#39;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+        &lt;span class=&quot;bp&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;db&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;create_collection&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&#39;mytestcollection&#39;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+
+    &lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;test_doc_published&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;bp&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;):&lt;/span&gt;
+        &lt;span class=&quot;c&quot;&gt;# Set up a document to save&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;doc&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;dict&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;text&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;test&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+                      &lt;span class=&quot;n&quot;&gt;user_id&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+        &lt;span class=&quot;bp&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;db&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;mytestcollection&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;save&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;doc&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+        &lt;span class=&quot;bp&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;assertEqual&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;bp&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;db&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;mytestcollection&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;find_one&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;
+            &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&#39;user_id&#39;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;})[&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&#39;text&#39;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;],&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&#39;test&#39;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+
+    &lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;tearDown&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;bp&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;):&lt;/span&gt;
+        &lt;span class=&quot;bp&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;db&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;drop_collection&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&#39;mytestcollection&#39;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;What this does is &lt;code&gt;setUp()&lt;/code&gt; a collection in the &lt;code&gt;mytestcollection&lt;/code&gt; collection, runs the &lt;code&gt;my_doc_published&lt;/code&gt; test and then tears down the test database environment by dropping the &lt;code&gt;mytestcollection&lt;/code&gt; collection.&lt;/p&gt;
+
+&lt;p&gt;Things to remember for &lt;code&gt;setUp()&lt;/code&gt; and &lt;code&gt;tearDown()&lt;/code&gt;:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;
+    &lt;p&gt;&lt;code&gt;setUp()&lt;/code&gt; is called before every test method in your TestCase class.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;&lt;code&gt;tearDown()&lt;/code&gt; is called after every test method in your TestCase class.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;&lt;code&gt;tearDown()&lt;/code&gt; is called even if your test methods fail or error out.&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;And there you have it! Django makes testing even non-ORM datasources a snap, if you know how to wire it up.
+&lt;strong&gt;UPDATE:&lt;/strong&gt; Some would say that database fixtures and setting up/tearing down database environments as part of your unit tests is not “unit testing”. This is not entirely accurate, because in order to do unit tests that rely on backend data, you &lt;strong&gt;must&lt;/strong&gt; instantiate and tear down pristine database environments.&lt;/p&gt;
+
+    &lt;p&gt;&lt;a href=&quot;/2011/02/07/unit-testing-django-with-a-nosql-backend/&quot;&gt;Unit Testing Django with a NoSQL Backend&lt;/a&gt; was originally published by Ben Belchak at &lt;a href=&quot;&quot;&gt;Belchak.com&lt;/a&gt; on February 07, 2011.&lt;/p&gt;
+  </content>
+</entry>
+
+
+<entry>
+  <title type="html"><![CDATA[Unit Testing Your Django Application]]></title>
+ <link rel="alternate" type="text/html" href="/2011/02/05/unit-testing-your-django-application/" />
+  <id>/2011/02/05/unit-testing-your-django-application</id>
+  <published>2011-02-05T21:33:40+00:00</published>
+  <updated>2011-02-05T21:33:40+00:00</updated>
+  <author>
+    <name>Ben Belchak</name>
+    <uri></uri>
+    <email>ben@belchak.com</email>
+  </author>
+  <content type="html">
+    &lt;p&gt;Unit testing is a very important part of any software project. It helps you know that the new code you are deploying works, and isn’t going to blow up in your face. It also helps you feel good about changing large chunks of code without destroying everything you’ve done for the last 3 years.&lt;/p&gt;
+
+&lt;p&gt;Unit testing with django is as simple as pie. &lt;a href=&quot;http://docs.djangoproject.com/en/dev/topics/testing/&quot;&gt;The documentation&lt;/a&gt; is very good, and you can learn a lot about more advanced testing methods from &lt;a href=&quot;http://docs.python.org/library/unittest.html&quot;&gt;the python documentation&lt;/a&gt;. In this blog post, I aim to show a quick way to get up and running with testing your django application.&lt;/p&gt;
+
+&lt;p&gt;First, if you are just starting out, make sure you put a high emphasis on testing your application, otherwise you are going to end up with a bunch of code that has never been tested and you will find yourself writing code for weeks just to get partial coverage on the code you’ve already written. Starting off on the right foot is a much better approach, and you will find life much more enjoyable.&lt;/p&gt;
+
+&lt;p&gt;Let’s get started…&lt;/p&gt;
+
+&lt;p&gt;First of all, you need to define your models:&lt;/p&gt;
+
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-python&quot; data-lang=&quot;python&quot;&gt;&lt;span class=&quot;kn&quot;&gt;from&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;django.db&lt;/span&gt; &lt;span class=&quot;kn&quot;&gt;import&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;models&lt;/span&gt;
+&lt;span class=&quot;kn&quot;&gt;from&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;django.contrib.auth.models&lt;/span&gt; &lt;span class=&quot;kn&quot;&gt;import&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;User&lt;/span&gt;
+
+&lt;span class=&quot;k&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Post&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;models&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Model&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;):&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;title&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;models&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;CharField&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;max_length&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;50&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;body&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;models&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;TextField&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;author&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;models&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ForeignKey&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;User&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;related_name&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;news_post&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;date&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;models&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;DateTimeField&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;users_read&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;models&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ManyToManyField&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;User&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;related_name&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;users&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;blank&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;bp&quot;&gt;True&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+
+    &lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;__str__&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;bp&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;):&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;bp&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;title&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;What we have done here is created a news post item. Let’s test it!&lt;/p&gt;
+
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-python&quot; data-lang=&quot;python&quot;&gt;&lt;span class=&quot;k&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;PostTestCase&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;TestCase&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;):&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;fixtures&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&#39;test_data.json&#39;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;setUp&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;bp&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;):&lt;/span&gt;
+        &lt;span class=&quot;bp&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;user&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;User&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;objects&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;create_user&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&#39;newsposter&#39;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+                                             &lt;span class=&quot;s&quot;&gt;&#39;newsposter@news.com&#39;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&#39;newspass&#39;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+        &lt;span class=&quot;bp&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;post&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Post&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;objects&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;create&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;title&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;Test Post #1&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+                &lt;span class=&quot;n&quot;&gt;body&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;Test Post #1 Body&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+                &lt;span class=&quot;n&quot;&gt;author&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;bp&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;user&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+                &lt;span class=&quot;n&quot;&gt;date&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;datetime&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;datetime&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;now&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;())&lt;/span&gt;
+        &lt;span class=&quot;bp&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;c&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Client&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
+
+
+    &lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;test_post_creation&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;bp&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;):&lt;/span&gt;
+        &lt;span class=&quot;s&quot;&gt;&quot;&quot;&quot;
+        Tests that we can create a Post
+        &quot;&quot;&quot;&lt;/span&gt;
+        &lt;span class=&quot;bp&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;assertEqual&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;bp&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;post&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;title&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;Test Post #1&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+        &lt;span class=&quot;bp&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;assertEqual&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;bp&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;post&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;author&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;bp&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;user&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+
+    &lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;test_user_can_read&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;bp&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;):&lt;/span&gt;
+        &lt;span class=&quot;s&quot;&gt;&quot;&quot;&quot;
+        Tests that a user is allowed to read.
+        &quot;&quot;&quot;&lt;/span&gt;
+        &lt;span class=&quot;bp&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;c&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;login&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;username&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&#39;newsposter&#39;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;password&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&#39;newspass&#39;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;response&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;bp&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;c&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;get&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&#39;/news/get_post/1/&#39;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+        &lt;span class=&quot;bp&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;assertEqual&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;response&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;status_code&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;200&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+        &lt;span class=&quot;bp&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;assertNotEqual&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;response&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;content&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&#39;{}&#39;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;One of the really cool thing about testing with django is that it comes with a testing client that allows you to make requests just like a real user would. As you can see in our &lt;code&gt;test_user_can_read()&lt;/code&gt; method, we have used the client to make a GET request against a URL. You can make a POST request just as easily:&lt;/p&gt;
+
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-python&quot; data-lang=&quot;python&quot;&gt;&lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;test_i_read_this&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;bp&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;):&lt;/span&gt;
+    &lt;span class=&quot;s&quot;&gt;&quot;&quot;&quot;
+    Tests a new user marking the story as read.
+    &quot;&quot;&quot;&lt;/span&gt;
+    &lt;span class=&quot;bp&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;c&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;login&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;username&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&#39;newsposter&#39;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;password&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&#39;newspass&#39;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;response&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;bp&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;c&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;post&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&#39;/news/read/1/&#39;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&#39;add&#39;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;bp&quot;&gt;True&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;})&lt;/span&gt;
+    &lt;span class=&quot;bp&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;assertEqual&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;response&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;status_code&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;200&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;bp&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;assertEquals&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;response&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;content&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&#39;{&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\n&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;    &quot;read&quot;: true&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\n&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;}&#39;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;In the previous code sample, the client sends a POST request to &lt;code&gt;/news/read/1/&lt;/code&gt; with the &lt;code&gt;{&#39;add&#39;:True}&lt;/code&gt; data. This gets converted to form data and submitted via the POST. The request returns back JSON, which we match up against what we expect it to return.&lt;/p&gt;
+
+&lt;p&gt;Here are some things to remember when you are writing your test cases:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;
+    &lt;p&gt;&lt;code&gt;setUp()&lt;/code&gt; gets called before &lt;strong&gt;every&lt;/strong&gt; test method in your TestCase.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;&lt;code&gt;tearDown()&lt;/code&gt; gets called after &lt;strong&gt;every&lt;/strong&gt; test method in your TestCase.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;Test methods &lt;strong&gt;must&lt;/strong&gt; start with “test” otherwise they will not be executed. It is safe to have other methods in your TestCase that do not begin with “test” if you want to abstract functionality for multiple test methods into a single function.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;Django creates a test database for you, populates it, runs any south migrations (if you are using south), and then destroys it.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;Do not expect that data that is available in one of your test methods will be available in another. Each test method starts with a blank data slate. If you need data instantiated before your tests are run, consider using the &lt;code&gt;setUp()&lt;/code&gt; and &lt;code&gt;tearDown()&lt;/code&gt; methods, or using fixtures. You can specify fixtures other than your initial_data fixtures by adding &lt;code&gt;fixtures = [&#39;test_data.json&#39;]&lt;/code&gt; to your TestCase class.&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Here is in-depth documentation about what assert methods are available to you in different versions of Python in &lt;a href=&quot;http://docs.python.org/library/unittest.html#test-cases&quot;&gt;the official Python unittest documentation&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;As you can see, testing with django is really really simple, but very powerful. In my next post, I will discuss how to test django with a MongoDB backend that does not use the ORM.&lt;/p&gt;
+
+    &lt;p&gt;&lt;a href=&quot;/2011/02/05/unit-testing-your-django-application/&quot;&gt;Unit Testing Your Django Application&lt;/a&gt; was originally published by Ben Belchak at &lt;a href=&quot;&quot;&gt;Belchak.com&lt;/a&gt; on February 05, 2011.&lt;/p&gt;
+  </content>
+</entry>
+
+
+<entry>
+  <title type="html"><![CDATA[Code Completion (IntelliSense) in VIM]]></title>
+ <link rel="alternate" type="text/html" href="/2011/01/31/code-completion-for-python-and-django-in-vim/" />
+  <id>/2011/01/31/code-completion-for-python-and-django-in-vim</id>
+  <published>2011-01-31T08:58:05+00:00</published>
+  <updated>2011-01-31T08:58:05+00:00</updated>
+  <author>
+    <name>Ben Belchak</name>
+    <uri></uri>
+    <email>ben@belchak.com</email>
+  </author>
+  <content type="html">
+    &lt;p&gt;&lt;a href=&quot;http://www.vim.org/&quot;&gt;VIM&lt;/a&gt; has been my editor of choice for at least 15 years. I love how fast I can edit files, perform menial tasks, and wreak general havoc on any code project I am working on at any given moment. One of the things that I have missed about VIM from an IDE perspective has been code completion (a.k.a. “IntelliSense”). I have spent a lot of time on websites and man pages trying to figure out syntax and function names for several types of languages, and just recently discovered a long-included feature of VIM called omni completion, or Omnicomplete.&lt;/p&gt;
+
+&lt;p&gt;Since my life is mostly centered around &lt;a href=&quot;http://www.djangoproject.com&quot;&gt;django&lt;/a&gt; these days, I will discuss how I’ve benefited from omnicomplete and how I’ve set it up in my own environment.&lt;/p&gt;
+
+&lt;p&gt;First, since django is a web development framework, I want to make sure that I can get omnicompletion for HTML, Python, JavaScript and CSS. Omnicompletion works for almost any programming language that VIM has syntax highlighting support for, and these languages are no exception.&lt;/p&gt;
+
+&lt;p&gt;Here’s what omnicomplete looks like for CSS files, for example:&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;http://www.belchak.com/wp-content/uploads/2011/01/Screen-shot-2011-01-30-at-3.37.00-PM-1-30-11-300x213.png&quot; width=&quot;300&quot; alt=&quot;omnicomplete for vim&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Setting this up for your django project is simple as pie. It is helpful to have all your django projects in one parent directory for the following setup. You can obviously customize this to your needs, but this is the way I’ve set it up in my environment.&lt;/p&gt;
+
+&lt;p&gt;Add the following to a script in a directory of your choosing (~/bin/vim_wrapper is where mine is):&lt;/p&gt;
+
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;&lt;span class=&quot;c&quot;&gt;#!/bin/bash&lt;/span&gt;
+&lt;span class=&quot;nb&quot;&gt;export &lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;PROJECT&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;sb&quot;&gt;`&lt;/span&gt;python -c &lt;span class=&quot;s2&quot;&gt;&quot;import os; print os.path.basename(os.getcwd())&quot;&lt;/span&gt;&lt;span class=&quot;sb&quot;&gt;`&lt;/span&gt;
+&lt;span class=&quot;nb&quot;&gt;export &lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;PYTHONPATH&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;/path/to/your/projects/parent/directory/&quot;&lt;/span&gt;
+&lt;span class=&quot;nb&quot;&gt;export &lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;DJANGO_SETTINGS_MODULE&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;$PROJECT&lt;/span&gt;.settings vim
+&lt;span class=&quot;nv&quot;&gt;$@&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;Then add the following line to your ~/.bash_profile or equivalent:&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;alias vi=&quot;vim_wrapper&quot;&lt;/code&gt;&lt;/p&gt;
+
+&lt;p&gt;Or, you can call your vim_wrapper script by hand. (&lt;code&gt;vim_wrapper file_to_edit.py&lt;/code&gt;)&lt;/p&gt;
+
+&lt;p&gt;Next, add the following lines to your ~/.vimrc file:&lt;/p&gt;
+
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-vim&quot; data-lang=&quot;vim&quot;&gt;&lt;span class=&quot;k&quot;&gt;filetype&lt;/span&gt; plugin &lt;span class=&quot;k&quot;&gt;on&lt;/span&gt;
+autocmd &lt;span class=&quot;nb&quot;&gt;FileType&lt;/span&gt; python &lt;span class=&quot;k&quot;&gt;set&lt;/span&gt; omnifunc&lt;span class=&quot;p&quot;&gt;=&lt;/span&gt;pythoncomplete#Complete
+autocmd &lt;span class=&quot;nb&quot;&gt;FileType&lt;/span&gt; javascript &lt;span class=&quot;k&quot;&gt;set&lt;/span&gt; omnifunc&lt;span class=&quot;p&quot;&gt;=&lt;/span&gt;javascriptcomplete#CompleteJS
+autocmd &lt;span class=&quot;nb&quot;&gt;FileType&lt;/span&gt; html &lt;span class=&quot;k&quot;&gt;set&lt;/span&gt; omnifunc&lt;span class=&quot;p&quot;&gt;=&lt;/span&gt;htmlcomplete#CompleteTags
+autocmd &lt;span class=&quot;nb&quot;&gt;FileType&lt;/span&gt; css &lt;span class=&quot;k&quot;&gt;set&lt;/span&gt; omnifunc&lt;span class=&quot;p&quot;&gt;=&lt;/span&gt;csscomplete#CompleteCSS&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;I also prefer to re-map the default key binding (&lt;c-x&gt;&lt;c-o&gt;) to &lt;c-space&gt;, so I accomplish this by also adding the following line to my ~/.vimrc file: `inoremap &lt;c-space&gt; &lt;c-x&gt;&lt;c-o&gt;`&lt;/c-o&gt;&lt;/c-x&gt;&lt;/c-space&gt;&lt;/c-space&gt;&lt;/c-o&gt;&lt;/c-x&gt;&lt;/p&gt;
+
+&lt;p&gt;I also found &lt;a href=&quot;http://blogs.gnome.org/lharris/2008/07/20/code-completion-with-vim-7/&quot;&gt;this trick&lt;/a&gt; today while searching around…&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;What this function does is that if there is no completion that could happen it will insert a tab.  Otherwise it checks to see if there is an omnifunction available and, if so, uses it. Otherwise it falls back to Dictionary completion if there is a dictionary defined.  Finally it resorts to simple known word completion.  In general, hitting the Tab key will just do the right thing for you in any given situation.&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;Add the following to your ~/.vimrc and you should be good to go. It works like a charm for me.&lt;/p&gt;
+
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-vim&quot; data-lang=&quot;vim&quot;&gt;&lt;span class=&quot;k&quot;&gt;function&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;!&lt;/span&gt; SuperCleverTab&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; strpart&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;getline&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;&#39;.&#39;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;),&lt;/span&gt; &lt;span class=&quot;m&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;col&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;&#39;.&#39;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;m&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=~&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;&#39;^\s*$&#39;&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;\&quot;&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;else&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &amp;amp;omnifunc &lt;span class=&quot;p&quot;&gt;!=&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;&#39;&#39;&lt;/span&gt;
+            &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;\\&quot;&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;elseif&lt;/span&gt; &amp;amp;dictionary &lt;span class=&quot;p&quot;&gt;!=&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;&#39;&#39;&lt;/span&gt;
+            &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;\&quot;&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;else&lt;/span&gt;
+            &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;\&quot;&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;endif&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;endif&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;endfunction&lt;/span&gt;
+
+inoremap &lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;Tab&lt;span class=&quot;p&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;C&lt;span class=&quot;p&quot;&gt;-&lt;/span&gt;R&lt;span class=&quot;p&quot;&gt;&amp;gt;=&lt;/span&gt;SuperCleverTab&lt;span class=&quot;p&quot;&gt;()&amp;lt;&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;cr&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;If you find yourself writing code in other languages, the following lines in your vimrc should be adequate:&lt;/p&gt;
+
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-vim&quot; data-lang=&quot;vim&quot;&gt;&lt;span class=&quot;k&quot;&gt;filetype&lt;/span&gt; plugin &lt;span class=&quot;k&quot;&gt;on&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;set&lt;/span&gt; ofu&lt;span class=&quot;p&quot;&gt;=&lt;/span&gt;syntaxcomplete#Complete&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;You can now test that your installation works by changing directories to one of your django projects, firing up vim and running the following command: &lt;code&gt;:python from django import db&lt;/code&gt;&lt;/p&gt;
+
+&lt;p&gt;If you do not get a horrible error, you are good to go!&lt;/p&gt;
+
+&lt;p&gt;You can now access code completion by the following methods:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;
+    &lt;p&gt;&lt;code&gt;&amp;lt;C-p&amp;gt;&lt;/code&gt; - Shows a list of all local symbols. This is good if you do not have a tags file associated with the file you are editing.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;&lt;code&gt;&amp;lt;C-space&amp;gt;&lt;/code&gt; - Shows a list of all available symbols. You need to set up a tags file, which is outside the scope of this blog post&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;&lt;code&gt;&amp;lt;C-x&amp;gt;&amp;lt;C-o&amp;gt;&lt;/code&gt; - The original keystroke sequence that we re-mapped C-space to.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;&lt;code&gt;&amp;lt;Tab&amp;gt;&lt;/code&gt; - The all-powerful tab!`&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;I hope you enjoy your new-found power with vim as much as I do!&lt;/p&gt;
+
+    &lt;p&gt;&lt;a href=&quot;/2011/01/31/code-completion-for-python-and-django-in-vim/&quot;&gt;Code Completion (IntelliSense) in VIM&lt;/a&gt; was originally published by Ben Belchak at &lt;a href=&quot;&quot;&gt;Belchak.com&lt;/a&gt; on January 31, 2011.&lt;/p&gt;
+  </content>
+</entry>
+
+
+<entry>
+  <title type="html"><![CDATA[Django database migrations with South]]></title>
+ <link rel="alternate" type="text/html" href="/2011/01/27/django-database-migrations-with-south/" />
+  <id>/2011/01/27/django-database-migrations-with-south</id>
+  <published>2011-01-27T17:04:04+00:00</published>
+  <updated>2011-01-27T17:04:04+00:00</updated>
+  <author>
+    <name>Ben Belchak</name>
+    <uri></uri>
+    <email>ben@belchak.com</email>
+  </author>
+  <content type="html">
+    &lt;p&gt;I have been using &lt;a href=&quot;http://djangoproject.com&quot;&gt;django&lt;/a&gt; for web development for almost a year now, and I just recently started using &lt;a href=&quot;http://south.aeracode.org/&quot;&gt;South&lt;/a&gt; to do database migrations. To be fair, most of the work that I have been doing with databases has centered around &lt;a href=&quot;http://www.mongodb.org&quot;&gt;MongoDB&lt;/a&gt; and schema-less document stores instead of a traditional RDBMS. Since Django does not come with any database migration tools, my standard approach was to make sure that my models are completely thought out before running the manage.py syncdb command. The lack of a good database migration tool was one of the things that originally had turned me off to django.&lt;/p&gt;
+
+&lt;p&gt;Enter South. South lets you manage your database in a way very similar to how &lt;a href=&quot;http://rubyonrails.org&quot;&gt;Ruby on Rails&lt;/a&gt; works.&lt;/p&gt;
+
+&lt;p&gt;Converting a project to a South-managed project is very easy:&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;
+    &lt;p&gt;Ensure that your database and models are completely synced up. (i.e. your models are not ahead of your database or vice-versa)&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;Install South by running &lt;code&gt;[sudo] pip install south&lt;/code&gt;&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;Add South to your &lt;code&gt;INSTALLED_APPS&lt;/code&gt; list in the &lt;code&gt;settings.py&lt;/code&gt; for your django project.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;Run &lt;code&gt;./manage.py syncdb&lt;/code&gt; in your project root directory to add the South database tables to your database.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;If you have an existing application that you would like to conver to a South-managed application, run the following command: &lt;code&gt;./manage.py convert_to_south YOUR_APP_NAME&lt;/code&gt; If not, go to the next step!&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;Now you are ready to go! You can change one of your models and then proceed to the next step.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;Run the following command to get South to create an automatic migration for you: &lt;code&gt;./manage.py schemamigration YOUR_APP_NAME --auto&lt;/code&gt;&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;Now you can apply your newly created migration to your database:&lt;code&gt;./manage.py migrate YOUR_APP_NAME&lt;/code&gt;&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;Congratulations, you have performed your first database migration using South!&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;South lets you apply up to or back to any migration point by running a command like: &lt;code&gt;./manage.py migrate YOUR_APP_NAME 0001&lt;/code&gt; (that command would take you back to your initial migration point. You can get a list of all your migrations and a description about each one by running &lt;code&gt;./manage.py migrate YOUR_APP_NAME --list&lt;/code&gt;. This lists all of the migrations you have available and denotes with a (*) which ones have been applied.&lt;/p&gt;
+
+&lt;p&gt;South is great for working in a team. All migrations are stored in YOUR_APP_NAME/migrations, so you can simply add these to your VCS and all of your team  members will get all of your migrations. If there is a conflict in some of the migrations that you and a team member have been working on, South will detect it and let you &lt;a href=&quot;http://south.aeracode.org/docs/tutorial/part5.html#team-workflow&quot;&gt;merge the conflicts&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;All in all, I am really loving South. It makes working with an RDBMS and Django much more pleasant!&lt;/p&gt;
+
+    &lt;p&gt;&lt;a href=&quot;/2011/01/27/django-database-migrations-with-south/&quot;&gt;Django database migrations with South&lt;/a&gt; was originally published by Ben Belchak at &lt;a href=&quot;&quot;&gt;Belchak.com&lt;/a&gt; on January 27, 2011.&lt;/p&gt;
+  </content>
+</entry>
+
+
+<entry>
+  <title type="html"><![CDATA[Removing old ssh fingerprints from your known_hosts the quick and easy way]]></title>
+ <link rel="alternate" type="text/html" href="/2011/01/27/removing-old-ssh-fingerprints-from-your-known_hosts-the-quick-and-easy-way/" />
+  <id>/2011/01/27/removing-old-ssh-fingerprints-from-your-known_hosts-the-quick-and-easy-way</id>
+  <published>2011-01-27T12:38:05+00:00</published>
+  <updated>2011-01-27T12:38:05+00:00</updated>
+  <author>
+    <name>Ben Belchak</name>
+    <uri></uri>
+    <email>ben@belchak.com</email>
+  </author>
+  <content type="html">
+    &lt;p&gt;Ever have this problem? You just rebuilt a machine, and when you go to SSH into it, you get the following message:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@    WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED!     @
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+IT IS POSSIBLE THAT SOMEONE IS DOING SOMETHING NASTY!
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Many people just go edit their &lt;code&gt;~/.ssh/known_hosts&lt;/code&gt; file and carry on. But there is a faster/better way!&lt;/p&gt;
+
+&lt;p&gt;OpenSSH comes with a command called &lt;code&gt;ssh-keygen&lt;/code&gt; that allows you to generate and manage all your keys, including your ssh fingerprints.&lt;/p&gt;
+
+&lt;p&gt;Simple usage for this would be:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;ssh-keygen -R HOSTNAME
+&lt;/code&gt;&lt;/pre&gt;
+
+    &lt;p&gt;&lt;a href=&quot;/2011/01/27/removing-old-ssh-fingerprints-from-your-known_hosts-the-quick-and-easy-way/&quot;&gt;Removing old ssh fingerprints from your known_hosts the quick and easy way&lt;/a&gt; was originally published by Ben Belchak at &lt;a href=&quot;&quot;&gt;Belchak.com&lt;/a&gt; on January 27, 2011.&lt;/p&gt;
+  </content>
+</entry>
+
+
+<entry>
+  <title type="html"><![CDATA[Automatic MongoDB Backups to S3]]></title>
+ <link rel="alternate" type="text/html" href="/2011/01/20/automatic-mongodb-backups-to-s3/" />
+  <id>/2011/01/20/automatic-mongodb-backups-to-s3</id>
+  <published>2011-01-20T08:00:46+00:00</published>
+  <updated>2011-01-20T08:00:46+00:00</updated>
+  <author>
+    <name>Ben Belchak</name>
+    <uri></uri>
+    <email>ben@belchak.com</email>
+  </author>
+  <content type="html">
+    &lt;p&gt;One of the big problems with hosting your own database solution is that you have to do backups for it on a regular basis. Not only do you need to do backups for it, but you need to also keep backups offsite. Luckily, &lt;a href=&quot;http://aws.amazon.com/s3/&quot;&gt;Amazon S3&lt;/a&gt; allows a cheap and easy solution for your offsite backups.&lt;/p&gt;
+
+&lt;p&gt;I found a shell &lt;a href=&quot;https://github.com/micahwedemeyer/automongobackup&quot;&gt;script solution&lt;/a&gt; for handling MongoDB backups, but it only does local backups. It keeps a nice history of recent backups, and rotates off the oldest ones when the threshold for age is reached. I modified the code to call a Python script that then synchronizes the newly created backup file to S3. I haven’t wired up any purging functionality yet, and I don’t know if I am going to. S3 storage is so cheap that it really doesn’t matter much. A complete solution would, of course, keep your local files and your remote off-site backups in S3 in sync, but there is also a case to be made for keeping a rich history of backups in the “cloud” so as to be able to revert to any point in history if necessary.&lt;/p&gt;
+
+&lt;p&gt;The script that does the magic to synchronize and purge old backups is written in Python, and uses the &lt;a href=&quot;https://github.com/boto/boto&quot;&gt;boto&lt;/a&gt; library to quickly do the work.&lt;/p&gt;
+
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-python&quot; data-lang=&quot;python&quot;&gt;&lt;span class=&quot;n&quot;&gt;ACCESS_KEY&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&#39;YOUR_ACCESS_KEY&#39;&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;SECRET&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&#39;YOUR_SECRET_KEY&#39;&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;BUCKET_NAME&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&#39;YOUR_BACKUPS_BUCKET&#39;&lt;/span&gt; &lt;span class=&quot;c&quot;&gt;#note that you need to create this bucket first&lt;/span&gt;
+
+&lt;span class=&quot;kn&quot;&gt;from&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;boto.s3.connection&lt;/span&gt; &lt;span class=&quot;kn&quot;&gt;import&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;S3Connection&lt;/span&gt;
+&lt;span class=&quot;kn&quot;&gt;from&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;boto.s3.key&lt;/span&gt; &lt;span class=&quot;kn&quot;&gt;import&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Key&lt;/span&gt;
+
+&lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;save_file_in_s3&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;filename&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;):&lt;/span&gt;
+&lt;span class=&quot;err&quot;&gt;  &lt;/span&gt; &lt;span class=&quot;err&quot;&gt; &lt;/span&gt;&lt;span class=&quot;n&quot;&gt;conn&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;S3Connection&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ACCESS_KEY&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;SECRET&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;err&quot;&gt;  &lt;/span&gt; &lt;span class=&quot;err&quot;&gt; &lt;/span&gt;&lt;span class=&quot;n&quot;&gt;bucket&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;conn&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;get_bucket&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;BUCKET_NAME&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;err&quot;&gt;  &lt;/span&gt; &lt;span class=&quot;err&quot;&gt; &lt;/span&gt;&lt;span class=&quot;n&quot;&gt;k&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Key&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;bucket&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;err&quot;&gt;  &lt;/span&gt; &lt;span class=&quot;err&quot;&gt; &lt;/span&gt;&lt;span class=&quot;n&quot;&gt;k&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;key&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;filename&lt;/span&gt;
+&lt;span class=&quot;err&quot;&gt;  &lt;/span&gt; &lt;span class=&quot;err&quot;&gt; &lt;/span&gt;&lt;span class=&quot;n&quot;&gt;k&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;set_contents_from_filename&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;filename&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+
+&lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;get_file_from_s3&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;filename&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;):&lt;/span&gt;
+&lt;span class=&quot;err&quot;&gt;  &lt;/span&gt; &lt;span class=&quot;err&quot;&gt; &lt;/span&gt;&lt;span class=&quot;n&quot;&gt;conn&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;S3Connection&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ACCESS_KEY&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;SECRET&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;err&quot;&gt;  &lt;/span&gt; &lt;span class=&quot;err&quot;&gt; &lt;/span&gt;&lt;span class=&quot;n&quot;&gt;bucket&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;conn&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;get_bucket&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;BUCKET_NAME&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;err&quot;&gt;  &lt;/span&gt; &lt;span class=&quot;err&quot;&gt; &lt;/span&gt;&lt;span class=&quot;n&quot;&gt;k&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Key&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;bucket&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;err&quot;&gt;  &lt;/span&gt; &lt;span class=&quot;err&quot;&gt; &lt;/span&gt;&lt;span class=&quot;n&quot;&gt;k&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;key&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;filename&lt;/span&gt;
+&lt;span class=&quot;err&quot;&gt;  &lt;/span&gt; &lt;span class=&quot;err&quot;&gt; &lt;/span&gt;&lt;span class=&quot;n&quot;&gt;k&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;get_contents_to_filename&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;filename&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+
+&lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;list_backup_in_s3&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;():&lt;/span&gt;
+&lt;span class=&quot;err&quot;&gt;  &lt;/span&gt; &lt;span class=&quot;err&quot;&gt; &lt;/span&gt;&lt;span class=&quot;n&quot;&gt;conn&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;S3Connection&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ACCESS_KEY&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;SECRET&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;err&quot;&gt;  &lt;/span&gt; &lt;span class=&quot;err&quot;&gt; &lt;/span&gt;&lt;span class=&quot;n&quot;&gt;bucket&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;conn&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;get_bucket&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;BUCKET_NAME&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;err&quot;&gt;  &lt;/span&gt; &lt;span class=&quot;err&quot;&gt; &lt;/span&gt;&lt;span class=&quot;k&quot;&gt;for&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;i&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;key&lt;/span&gt; &lt;span class=&quot;ow&quot;&gt;in&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;enumerate&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;bucket&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;get_all_keys&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()):&lt;/span&gt;
+&lt;span class=&quot;err&quot;&gt;  &lt;/span&gt; &lt;span class=&quot;err&quot;&gt; &lt;/span&gt; &lt;span class=&quot;err&quot;&gt; &lt;/span&gt; &lt;span class=&quot;err&quot;&gt; &lt;/span&gt;&lt;span class=&quot;k&quot;&gt;print&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;[&lt;/span&gt;&lt;span class=&quot;si&quot;&gt;%&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;s] &lt;/span&gt;&lt;span class=&quot;si&quot;&gt;%&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;s&quot;&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;%&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;i&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;key&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+
+&lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;delete_all_backups&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;():&lt;/span&gt;
+&lt;span class=&quot;err&quot;&gt;  &lt;/span&gt; &lt;span class=&quot;err&quot;&gt; &lt;/span&gt;&lt;span class=&quot;c&quot;&gt;#FIXME: validate filename exists&lt;/span&gt;
+&lt;span class=&quot;err&quot;&gt;  &lt;/span&gt; &lt;span class=&quot;err&quot;&gt; &lt;/span&gt;&lt;span class=&quot;n&quot;&gt;conn&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;S3Connection&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ACCESS_KEY&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;SECRET&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;err&quot;&gt;  &lt;/span&gt; &lt;span class=&quot;err&quot;&gt; &lt;/span&gt;&lt;span class=&quot;n&quot;&gt;bucket&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;conn&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;get_bucket&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;BUCKET_NAME&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;err&quot;&gt;  &lt;/span&gt; &lt;span class=&quot;err&quot;&gt; &lt;/span&gt;&lt;span class=&quot;k&quot;&gt;for&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;i&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;key&lt;/span&gt; &lt;span class=&quot;ow&quot;&gt;in&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;enumerate&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;bucket&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;get_all_keys&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()):&lt;/span&gt;
+&lt;span class=&quot;err&quot;&gt;  &lt;/span&gt; &lt;span class=&quot;err&quot;&gt; &lt;/span&gt; &lt;span class=&quot;err&quot;&gt; &lt;/span&gt; &lt;span class=&quot;err&quot;&gt; &lt;/span&gt;&lt;span class=&quot;k&quot;&gt;print&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;deleting &lt;/span&gt;&lt;span class=&quot;si&quot;&gt;%&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;s&quot;&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;%&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;key&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;err&quot;&gt;  &lt;/span&gt; &lt;span class=&quot;err&quot;&gt; &lt;/span&gt; &lt;span class=&quot;err&quot;&gt; &lt;/span&gt; &lt;span class=&quot;err&quot;&gt; &lt;/span&gt;&lt;span class=&quot;n&quot;&gt;key&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;delete&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
+
+&lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;__name__&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;==&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&#39;__main__&#39;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;
+&lt;span class=&quot;err&quot;&gt;  &lt;/span&gt; &lt;span class=&quot;err&quot;&gt; &lt;/span&gt;&lt;span class=&quot;kn&quot;&gt;import&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;sys&lt;/span&gt;
+&lt;span class=&quot;err&quot;&gt;  &lt;/span&gt; &lt;span class=&quot;err&quot;&gt; &lt;/span&gt;&lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;len&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;sys&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;argv&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;3&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;
+&lt;span class=&quot;err&quot;&gt;  &lt;/span&gt; &lt;span class=&quot;err&quot;&gt; &lt;/span&gt; &lt;span class=&quot;err&quot;&gt; &lt;/span&gt; &lt;span class=&quot;err&quot;&gt; &lt;/span&gt;&lt;span class=&quot;k&quot;&gt;print&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&#39;Usage: &lt;/span&gt;&lt;span class=&quot;si&quot;&gt;%&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;s  &#39;&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;%&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;sys&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;argv&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;])&lt;/span&gt;
+&lt;span class=&quot;err&quot;&gt;  &lt;/span&gt; &lt;span class=&quot;err&quot;&gt; &lt;/span&gt;&lt;span class=&quot;k&quot;&gt;else&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;
+&lt;span class=&quot;err&quot;&gt;  &lt;/span&gt; &lt;span class=&quot;err&quot;&gt; &lt;/span&gt; &lt;span class=&quot;err&quot;&gt; &lt;/span&gt; &lt;span class=&quot;err&quot;&gt; &lt;/span&gt;&lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;sys&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;argv&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;==&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&#39;set&#39;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;
+&lt;span class=&quot;err&quot;&gt;  &lt;/span&gt; &lt;span class=&quot;err&quot;&gt; &lt;/span&gt; &lt;span class=&quot;err&quot;&gt; &lt;/span&gt; &lt;span class=&quot;err&quot;&gt; &lt;/span&gt; &lt;span class=&quot;err&quot;&gt; &lt;/span&gt; &lt;span class=&quot;err&quot;&gt; &lt;/span&gt;&lt;span class=&quot;n&quot;&gt;save_file_in_s3&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;sys&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;argv&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;2&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;])&lt;/span&gt;
+&lt;span class=&quot;err&quot;&gt;  &lt;/span&gt; &lt;span class=&quot;err&quot;&gt; &lt;/span&gt; &lt;span class=&quot;err&quot;&gt; &lt;/span&gt; &lt;span class=&quot;err&quot;&gt; &lt;/span&gt;&lt;span class=&quot;k&quot;&gt;elif&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;sys&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;argv&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;==&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&#39;get&#39;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;
+&lt;span class=&quot;err&quot;&gt;  &lt;/span&gt; &lt;span class=&quot;err&quot;&gt; &lt;/span&gt; &lt;span class=&quot;err&quot;&gt; &lt;/span&gt; &lt;span class=&quot;err&quot;&gt; &lt;/span&gt; &lt;span class=&quot;err&quot;&gt; &lt;/span&gt; &lt;span class=&quot;err&quot;&gt; &lt;/span&gt;&lt;span class=&quot;n&quot;&gt;get_file_from_s3&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;sys&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;argv&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;2&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;])&lt;/span&gt;
+&lt;span class=&quot;err&quot;&gt;  &lt;/span&gt; &lt;span class=&quot;err&quot;&gt; &lt;/span&gt; &lt;span class=&quot;err&quot;&gt; &lt;/span&gt; &lt;span class=&quot;err&quot;&gt; &lt;/span&gt;&lt;span class=&quot;k&quot;&gt;elif&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;sys&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;argv&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;==&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&#39;list&#39;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;
+&lt;span class=&quot;err&quot;&gt;  &lt;/span&gt; &lt;span class=&quot;err&quot;&gt; &lt;/span&gt; &lt;span class=&quot;err&quot;&gt; &lt;/span&gt; &lt;span class=&quot;err&quot;&gt; &lt;/span&gt; &lt;span class=&quot;err&quot;&gt; &lt;/span&gt; &lt;span class=&quot;err&quot;&gt; &lt;/span&gt;&lt;span class=&quot;n&quot;&gt;list_backup_in_s3&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
+&lt;span class=&quot;err&quot;&gt;  &lt;/span&gt; &lt;span class=&quot;err&quot;&gt; &lt;/span&gt; &lt;span class=&quot;err&quot;&gt; &lt;/span&gt; &lt;span class=&quot;err&quot;&gt; &lt;/span&gt;&lt;span class=&quot;k&quot;&gt;elif&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;sys&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;argv&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;==&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&#39;delete&#39;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;
+&lt;span class=&quot;err&quot;&gt;  &lt;/span&gt; &lt;span class=&quot;err&quot;&gt; &lt;/span&gt; &lt;span class=&quot;err&quot;&gt; &lt;/span&gt; &lt;span class=&quot;err&quot;&gt; &lt;/span&gt; &lt;span class=&quot;err&quot;&gt; &lt;/span&gt; &lt;span class=&quot;err&quot;&gt; &lt;/span&gt;&lt;span class=&quot;n&quot;&gt;delete_all_backups&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
+&lt;span class=&quot;err&quot;&gt;  &lt;/span&gt; &lt;span class=&quot;err&quot;&gt; &lt;/span&gt; &lt;span class=&quot;err&quot;&gt; &lt;/span&gt; &lt;span class=&quot;err&quot;&gt; &lt;/span&gt;&lt;span class=&quot;k&quot;&gt;else&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;
+&lt;span class=&quot;err&quot;&gt;  &lt;/span&gt; &lt;span class=&quot;err&quot;&gt; &lt;/span&gt; &lt;span class=&quot;err&quot;&gt; &lt;/span&gt; &lt;span class=&quot;err&quot;&gt; &lt;/span&gt; &lt;span class=&quot;err&quot;&gt; &lt;/span&gt; &lt;span class=&quot;err&quot;&gt; &lt;/span&gt;&lt;span class=&quot;k&quot;&gt;print&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&#39;Usage: &lt;/span&gt;&lt;span class=&quot;si&quot;&gt;%&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;s  &#39;&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;%&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;sys&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;argv&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;])&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;There is obviously a lot more work to be done on this script, but it’s a start.&lt;/p&gt;
+
+&lt;p&gt;The appropriate setup for using this script and the AutoMongoBackup utility is to create a slave MongoDB node that receives synchronizations from the master. If you can handle having your Mongo instance locked for reads/writes while a backup is performed (i.e. you have a small database that backs up quickly) then you more than likely do not need to do the slave method.&lt;/p&gt;
+
+&lt;p&gt;Anyway, hope this helps! I’d love to hear other ideas about how else this can be done.&lt;/p&gt;
+
+    &lt;p&gt;&lt;a href=&quot;/2011/01/20/automatic-mongodb-backups-to-s3/&quot;&gt;Automatic MongoDB Backups to S3&lt;/a&gt; was originally published by Ben Belchak at &lt;a href=&quot;&quot;&gt;Belchak.com&lt;/a&gt; on January 20, 2011.&lt;/p&gt;
+  </content>
+</entry>
+
+
+<entry>
+  <title type="html"><![CDATA[Problems with Facebook API and M2Crypto]]></title>
+ <link rel="alternate" type="text/html" href="/2011/01/19/problems-with-facebook-api-and-m2crypto/" />
+  <id>/2011/01/19/problems-with-facebook-api-and-m2crypto</id>
+  <published>2011-01-19T23:25:36+00:00</published>
+  <updated>2011-01-19T23:25:36+00:00</updated>
+  <author>
+    <name>Ben Belchak</name>
+    <uri></uri>
+    <email>ben@belchak.com</email>
+  </author>
+  <content type="html">
+    &lt;p&gt;After doing some crypto updates to a django application that I am working on, I discovered that the Facebook API was dog slow for retrieving any query using HTTPS. Turns out that the M2Crypto library apparently hijacks the SSL processing of urllib and mucks everything up. Thanks to &lt;a href=&quot;http://hustoknow.blogspot.com/2011/01/m2crypto-and-facebooks-sdk-hangs.html&quot;&gt;this handy blog post&lt;/a&gt;, I was able to fix my Python implementation of the Facebook API and get things speeding along again.&lt;/p&gt;
+
+&lt;p&gt;The fix is basically to add the following lines before any &lt;code&gt;urllib.urlopen()&lt;/code&gt; call (in my case, I only have two - one for GET and one for POST):&lt;/p&gt;
+
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-python&quot; data-lang=&quot;python&quot;&gt;&lt;span class=&quot;n&quot;&gt;urllib&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;_urlopener&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;urllib&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;FancyURLopener&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;urllib&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;_urlopener&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;addheader&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&#39;Connection&#39;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&#39;close&#39;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+
+    &lt;p&gt;&lt;a href=&quot;/2011/01/19/problems-with-facebook-api-and-m2crypto/&quot;&gt;Problems with Facebook API and M2Crypto&lt;/a&gt; was originally published by Ben Belchak at &lt;a href=&quot;&quot;&gt;Belchak.com&lt;/a&gt; on January 19, 2011.&lt;/p&gt;
+  </content>
+</entry>
+
+</feed>

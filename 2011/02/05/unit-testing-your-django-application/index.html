@@ -1,0 +1,323 @@
+<!doctype html>
+<!--[if lt IE 7]><html class="no-js lt-ie9 lt-ie8 lt-ie7" lang="en"> <![endif]-->
+<!--[if (IE 7)&!(IEMobile)]><html class="no-js lt-ie9 lt-ie8" lang="en"><![endif]-->
+<!--[if (IE 8)&!(IEMobile)]><html class="no-js lt-ie9" lang="en"><![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en"><!--<![endif]-->
+<head>
+<meta charset="utf-8">
+<title>Unit Testing Your Django Application &#8211; Belchak.com</title>
+<meta name="description" content="A blog about technology and leadership, and sometimes about leadership in technology.
+">
+<meta name="keywords" content="django, python, unit testing">
+
+<!-- Twitter Cards -->
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="/images/">
+<meta name="twitter:title" content="Unit Testing Your Django Application">
+<meta name="twitter:description" content="A blog about technology and leadership, and sometimes about leadership in technology.
+">
+<meta name="twitter:creator" content="@BenBelchak">
+
+<!-- Open Graph -->
+<meta property="og:locale" content="en_US">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Unit Testing Your Django Application">
+<meta property="og:description" content="A blog about technology and leadership, and sometimes about leadership in technology.
+">
+<meta property="og:url" content="/2011/02/05/unit-testing-your-django-application/">
+<meta property="og:site_name" content="Belchak.com">
+
+
+
+
+
+<link rel="canonical" href="/2011/02/05/unit-testing-your-django-application/">
+<link href="/feed.xml" type="application/atom+xml" rel="alternate" title="Belchak.com Feed">
+
+<!-- http://t.co/dKP3o1e -->
+<meta name="HandheldFriendly" content="True">
+<meta name="MobileOptimized" content="320">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<!-- For all browsers -->
+<link rel="stylesheet" href="/assets/css/main.css">
+<!-- Webfonts -->
+<link href="//fonts.googleapis.com/css?family=Lato:300,400,700,300italic,400italic" rel="stylesheet" type="text/css">
+
+<meta http-equiv="cleartype" content="on">
+
+<!-- Load Modernizr -->
+<script src="/assets/js/vendor/modernizr-2.6.2.custom.min.js"></script>
+
+<!-- Icons -->
+<!-- 16x16 -->
+<link rel="shortcut icon" href="/favicon.ico">
+<!-- 32x32 -->
+<link rel="shortcut icon" href="/favicon.png">
+<!-- 57x57 (precomposed) for iPhone 3GS, pre-2011 iPod Touch and older Android devices -->
+<link rel="apple-touch-icon-precomposed" href="/images/apple-touch-icon-precomposed.png">
+<!-- 72x72 (precomposed) for 1st generation iPad, iPad 2 and iPad mini -->
+<link rel="apple-touch-icon-precomposed" sizes="72x72" href="/images/apple-touch-icon-72x72-precomposed.png">
+<!-- 114x114 (precomposed) for iPhone 4, 4S, 5 and post-2011 iPod Touch -->
+<link rel="apple-touch-icon-precomposed" sizes="114x114" href="/images/apple-touch-icon-114x114-precomposed.png">
+<!-- 144x144 (precomposed) for iPad 3rd and 4th generation -->
+<link rel="apple-touch-icon-precomposed" sizes="144x144" href="/images/apple-touch-icon-144x144-precomposed.png">
+
+
+
+</head>
+
+<body id="post" >
+
+<!--[if lt IE 9]><div class="upgrade"><strong><a href="http://whatbrowser.org/">Your browser is quite old!</strong> Why not upgrade to a different browser to better enjoy this site?</a></div><![endif]-->
+<nav id="dl-menu" class="dl-menuwrapper" role="navigation">
+	<button class="dl-trigger">Open Menu</button>
+	<ul class="dl-menu">
+		<li><a href="/">Home</a></li>
+		<li>
+			<a href="#">About</a>
+			<ul class="dl-submenu">
+				<li>
+					<img src="/images/avatar.jpg" alt="Ben Belchak photo" class="author-photo">
+					<h4>Ben Belchak</h4>
+					<p>Husband, father of four, Head of Site Reliability Engineering at Shazam. American in London.</p>
+				</li>
+				<li><a href="/about/"><span class="btn btn-inverse">Learn More</span></a></li>
+				<li>
+					<a href="mailto:ben@belchak.com"><i class="fa fa-fw fa-envelope"></i> Email</a>
+				</li>
+				<li>
+					<a href="https://twitter.com/BenBelchak"><i class="fa fa-fw fa-twitter"></i> Twitter</a>
+				</li>
+				<li>
+					<a href="https://facebook.com/hekman"><i class="fa fa-fw fa-facebook"></i> Facebook</a>
+				</li>
+				
+				<li>
+					<a href="https://linkedin.com/in/belchak"><i class="fa fa-fw fa-linkedin"></i> LinkedIn</a>
+				</li>
+				<li>
+					<a href="https://github.com/bbelchak"><i class="fa fa-fw fa-github"></i> GitHub</a>
+				</li>
+				<li>
+					<a href="ben-belchak"><i class="fa fa-fw fa-stack-exchange"></i> Stackexchange</a>
+				</li>
+				<li>
+					<a href="https://instagram.com/bbelchak"><i class="fa fa-fw fa-instagram"></i> Instagram</a>
+				</li>
+				
+				
+			</ul><!-- /.dl-submenu -->
+		</li>
+		<li>
+			<a href="#">Posts</a>
+			<ul class="dl-submenu">
+				<li><a href="/posts/">All Posts</a></li>
+				<li><a href="/tags/">All Tags</a></li>
+			</ul>
+		</li>
+		
+	</ul><!-- /.dl-menu -->
+</nav><!-- /.dl-menuwrapper -->
+
+
+
+
+<div id="main" role="main">
+  <article class="hentry">
+    <header class="header-title">
+      <div class="header-title-wrap">
+        
+          <h1 class="entry-title"><a href="/2011/02/05/unit-testing-your-django-application/" rel="bookmark" title="Unit Testing Your Django Application">Unit Testing Your Django Application</a></h1>
+        
+        <h2><span class="entry-date date published"><time datetime="2011-02-05T21:33:40+00:00">February 05, 2011</time></span></h2>
+        
+        <p class="entry-reading-time">
+          <i class="fa fa-clock-o"></i>
+          
+Reading time ~3 minutes
+        </p><!-- /.entry-reading-time -->
+        
+      </div><!-- /.header-title-wrap -->
+    </header>
+    <div class="entry-content">
+      <p>Unit testing is a very important part of any software project. It helps you know that the new code you are deploying works, and isn’t going to blow up in your face. It also helps you feel good about changing large chunks of code without destroying everything you’ve done for the last 3 years.</p>
+
+<p>Unit testing with django is as simple as pie. <a href="http://docs.djangoproject.com/en/dev/topics/testing/">The documentation</a> is very good, and you can learn a lot about more advanced testing methods from <a href="http://docs.python.org/library/unittest.html">the python documentation</a>. In this blog post, I aim to show a quick way to get up and running with testing your django application.</p>
+
+<p>First, if you are just starting out, make sure you put a high emphasis on testing your application, otherwise you are going to end up with a bunch of code that has never been tested and you will find yourself writing code for weeks just to get partial coverage on the code you’ve already written. Starting off on the right foot is a much better approach, and you will find life much more enjoyable.</p>
+
+<p>Let’s get started…</p>
+
+<p>First of all, you need to define your models:</p>
+
+<div class="highlight"><pre><code class="language-python" data-lang="python"><span class="kn">from</span> <span class="nn">django.db</span> <span class="kn">import</span> <span class="n">models</span>
+<span class="kn">from</span> <span class="nn">django.contrib.auth.models</span> <span class="kn">import</span> <span class="n">User</span>
+
+<span class="k">class</span> <span class="nc">Post</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">title</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
+    <span class="n">body</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">TextField</span><span class="p">()</span>
+    <span class="n">author</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">User</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s">"news_post"</span><span class="p">)</span>
+    <span class="n">date</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">DateTimeField</span><span class="p">()</span>
+    <span class="n">users_read</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ManyToManyField</span><span class="p">(</span><span class="n">User</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s">"users"</span><span class="p">,</span> <span class="n">blank</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">title</span></code></pre></div>
+
+<p>What we have done here is created a news post item. Let’s test it!</p>
+
+<div class="highlight"><pre><code class="language-python" data-lang="python"><span class="k">class</span> <span class="nc">PostTestCase</span><span class="p">(</span><span class="n">TestCase</span><span class="p">):</span>
+    <span class="n">fixtures</span> <span class="o">=</span> <span class="p">[</span><span class="s">'test_data.json'</span><span class="p">]</span>
+    <span class="k">def</span> <span class="nf">setUp</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">user</span> <span class="o">=</span> <span class="n">User</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create_user</span><span class="p">(</span><span class="s">'newsposter'</span><span class="p">,</span>
+                                             <span class="s">'newsposter@news.com'</span><span class="p">,</span> <span class="s">'newspass'</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">post</span> <span class="o">=</span> <span class="n">Post</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="s">"Test Post #1"</span><span class="p">,</span>
+                <span class="n">body</span><span class="o">=</span><span class="s">"Test Post #1 Body"</span><span class="p">,</span>
+                <span class="n">author</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">user</span><span class="p">,</span>
+                <span class="n">date</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">())</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">c</span> <span class="o">=</span> <span class="n">Client</span><span class="p">()</span>
+
+
+    <span class="k">def</span> <span class="nf">test_post_creation</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="s">"""
+        Tests that we can create a Post
+        """</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">post</span><span class="o">.</span><span class="n">title</span><span class="p">,</span> <span class="s">"Test Post #1"</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">post</span><span class="o">.</span><span class="n">author</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">user</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">test_user_can_read</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="s">"""
+        Tests that a user is allowed to read.
+        """</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">c</span><span class="o">.</span><span class="n">login</span><span class="p">(</span><span class="n">username</span><span class="o">=</span><span class="s">'newsposter'</span><span class="p">,</span> <span class="n">password</span><span class="o">=</span><span class="s">'newspass'</span><span class="p">)</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">c</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">'/news/get_post/1/'</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">status_code</span><span class="p">,</span> <span class="mi">200</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertNotEqual</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">content</span><span class="p">,</span> <span class="s">'{}'</span><span class="p">)</span></code></pre></div>
+
+<p>One of the really cool thing about testing with django is that it comes with a testing client that allows you to make requests just like a real user would. As you can see in our <code>test_user_can_read()</code> method, we have used the client to make a GET request against a URL. You can make a POST request just as easily:</p>
+
+<div class="highlight"><pre><code class="language-python" data-lang="python"><span class="k">def</span> <span class="nf">test_i_read_this</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="s">"""
+    Tests a new user marking the story as read.
+    """</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">c</span><span class="o">.</span><span class="n">login</span><span class="p">(</span><span class="n">username</span><span class="o">=</span><span class="s">'newsposter'</span><span class="p">,</span> <span class="n">password</span><span class="o">=</span><span class="s">'newspass'</span><span class="p">)</span>
+    <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">c</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s">'/news/read/1/'</span><span class="p">,</span> <span class="p">{</span><span class="s">'add'</span><span class="p">:</span><span class="bp">True</span><span class="p">})</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">status_code</span><span class="p">,</span> <span class="mi">200</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">assertEquals</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">content</span><span class="p">,</span> <span class="s">'{</span><span class="se">\n</span><span class="s">    "read": true</span><span class="se">\n</span><span class="s">}'</span><span class="p">)</span></code></pre></div>
+
+<p>In the previous code sample, the client sends a POST request to <code>/news/read/1/</code> with the <code>{'add':True}</code> data. This gets converted to form data and submitted via the POST. The request returns back JSON, which we match up against what we expect it to return.</p>
+
+<p>Here are some things to remember when you are writing your test cases:</p>
+
+<ul>
+  <li>
+    <p><code>setUp()</code> gets called before <strong>every</strong> test method in your TestCase.</p>
+  </li>
+  <li>
+    <p><code>tearDown()</code> gets called after <strong>every</strong> test method in your TestCase.</p>
+  </li>
+  <li>
+    <p>Test methods <strong>must</strong> start with “test” otherwise they will not be executed. It is safe to have other methods in your TestCase that do not begin with “test” if you want to abstract functionality for multiple test methods into a single function.</p>
+  </li>
+  <li>
+    <p>Django creates a test database for you, populates it, runs any south migrations (if you are using south), and then destroys it.</p>
+  </li>
+  <li>
+    <p>Do not expect that data that is available in one of your test methods will be available in another. Each test method starts with a blank data slate. If you need data instantiated before your tests are run, consider using the <code>setUp()</code> and <code>tearDown()</code> methods, or using fixtures. You can specify fixtures other than your initial_data fixtures by adding <code>fixtures = ['test_data.json']</code> to your TestCase class.</p>
+  </li>
+</ul>
+
+<p>Here is in-depth documentation about what assert methods are available to you in different versions of Python in <a href="http://docs.python.org/library/unittest.html#test-cases">the official Python unittest documentation</a>.</p>
+
+<p>As you can see, testing with django is really really simple, but very powerful. In my next post, I will discuss how to test django with a MongoDB backend that does not use the ORM.</p>
+
+      <footer class="entry-meta">
+        <span class="entry-tags"><a href="/tags/#django" title="Pages tagged django" class="tag"><span class="term">django</span></a><a href="/tags/#python" title="Pages tagged python" class="tag"><span class="term">python</span></a><a href="/tags/#unit testing" title="Pages tagged unit testing" class="tag"><span class="term">unit testing</span></a></span>
+        
+        <div class="social-share">
+  <ul class="socialcount socialcount-small inline-list">
+    <li class="facebook"><a href="https://www.facebook.com/sharer/sharer.php?u=/2011/02/05/unit-testing-your-django-application/" title="Share on Facebook"><span class="count"><i class="fa fa-facebook-square"></i> Like</span></a></li>
+    <li class="twitter"><a href="https://twitter.com/intent/tweet?text=/2011/02/05/unit-testing-your-django-application/" title="Share on Twitter"><span class="count"><i class="fa fa-twitter-square"></i> Tweet</span></a></li>
+    <li class="googleplus"><a href="https://plus.google.com/share?url=/2011/02/05/unit-testing-your-django-application/" title="Share on Google Plus"><span class="count"><i class="fa fa-google-plus-square"></i> +1</span></a></li>
+  </ul>
+</div><!-- /.social-share -->
+      </footer>
+    </div><!-- /.entry-content -->
+    <section id="disqus_thread"></section><!-- /#disqus_thread -->
+    <div class="read-more">
+  
+    <div class="read-more-header">
+      <a href="/2011/01/31/code-completion-for-python-and-django-in-vim/" class="read-more-btn">Read More</a>
+    </div><!-- /.read-more-header -->
+    <div class="read-more-content">
+      <h3><a href="/2012/08/02/making-sensu-work-with-graphite/" title="Making Sensu work with Graphite">Making Sensu work with Graphite</a></h3>
+      <p>Like many companies, I'm sure, we're investigating using [Sensu](http://www.sonian.com/cloud-monitoring-sensu/) for monitoringand [Graphi...&hellip; <a href="/2012/08/02/making-sensu-work-with-graphite/">Continue reading</a></p>
+    </div><!-- /.read-more-content -->
+  
+  <div class="read-more-list">
+    
+      <div class="list-item">
+        <h4><a href="/2012/07/31/migrating-from-wordpress-to-octopress/" title="Migrating from WordPress to Octopress">Migrating from WordPress to Octopress</a></h4>
+        <span>Published on July 31, 2012</span>
+      </div><!-- /.list-item -->
+    
+      <div class="list-item">
+        <h4><a href="/2012/01/21/jira-and-campfire-integration/" title="JIRA and Campfire Integration">JIRA and Campfire Integration</a></h4>
+        <span>Published on January 21, 2012</span>
+      </div><!-- /.list-item -->
+    
+  </div><!-- /.read-more-list -->
+</div><!-- /.read-more -->
+  </article>
+</div><!-- /#main -->
+
+<div class="footer-wrapper">
+  <footer role="contentinfo">
+    <span>&copy; 2016 Ben Belchak. Powered by <a href="http://jekyllrb.com" rel="nofollow">Jekyll</a> using the <a href="https://mademistakes.com/work/hpstr-jekyll-theme/" rel="nofollow">HPSTR Theme</a>.</span>
+  </footer>
+</div><!-- /.footer-wrapper -->
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+<script>window.jQuery || document.write('<script src="/assets/js/vendor/jquery-1.9.1.min.js"><\/script>')</script>
+<script src="/assets/js/scripts.min.js"></script>
+
+
+<!-- Asynchronous Google Analytics snippet -->
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-20863470-1', 'auto');  
+  ga('require', 'linkid', 'linkid.js');
+  ga('send', 'pageview');
+</script>
+
+
+
+    <script type="text/javascript">
+        /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+        var disqus_shortname = 'belchakcom'; // required: replace example with your forum shortname
+
+        /* * * DON'T EDIT BELOW THIS LINE * * */
+        (function() {
+            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        })();
+
+        /* * * DON'T EDIT BELOW THIS LINE * * */
+        (function () {
+            var s = document.createElement('script'); s.async = true;
+            s.type = 'text/javascript';
+            s.src = '//' + disqus_shortname + '.disqus.com/count.js';
+            (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+        }());
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+    <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+	        
+
+</body>
+</html>
